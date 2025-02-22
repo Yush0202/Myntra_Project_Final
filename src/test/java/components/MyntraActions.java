@@ -10,22 +10,15 @@ import com.microsoft.playwright.options.LoadState;
 
 
 public class MyntraActions {
-    private Playwright playwright;
-    private Browser browser;
-    private Page page;
+    private final Playwright playwright = Playwright.create();
+    private final Browser browser = playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(false));;
+    private final Page page= browser.newPage();
 
-    public MyntraActions() {
-        playwright = Playwright.create();
-        browser = playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(false));
-
-        // browser = playwright.chromium().launch(new BrowserType.LaunchOptions().setChannel("chrome").setHeadless(false));
-        page = browser.newPage();
-    }
 
     public void openMyntraWebsite() {
         page.navigate("https://www.myntra.com/");
-        //page.waitForTimeout(5000);
-        page.waitForLoadState(LoadState.NETWORKIDLE);
+
+        page.waitForLoadState(LoadState.LOAD);
     }
 
     //switch case for tshirt and casual shirt. for van heusen click tshirt
@@ -46,8 +39,6 @@ public class MyntraActions {
                 return;
         }
         page.waitForLoadState(LoadState.DOMCONTENTLOADED);
-        //page.waitForLoadState(LoadState.NETWORKIDLE);
-        //page.waitForTimeout(3000);
     }
 
 
@@ -79,8 +70,7 @@ public class MyntraActions {
 
         while (pageCount < pageCountLimit) {
             page.waitForSelector(".product-base"); // Wait until product listings are available
-            //page.waitForLoadState(LoadState.NETWORKIDLE);
-            //page.waitForTimeout(2000);
+
 
             // we iterate through all product elements on the page
             for (Locator product : page.locator(".product-base").all()) {
@@ -110,7 +100,6 @@ public class MyntraActions {
     //we are formatting the product details
     private Map<String, String> parseProductData(String name, String model, String priceText, String link) {
         Map<String, String> productData = new HashMap<>();
-       // productData.put("Name", name);
         productData.put("Model", model);
         productData.put("Link", link);
 
