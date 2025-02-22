@@ -10,9 +10,18 @@ import com.microsoft.playwright.options.LoadState;
 
 
 public class MyntraActions {
-    private final Playwright playwright = Playwright.create();
-    private final Browser browser = playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(false));;
-    private final Page page= browser.newPage();
+
+    private final Page page;
+
+    private final Playwright playwright;
+
+    private final Browser browser;
+
+    public MyntraActions(Page page, Playwright playwright, Browser browser) {
+        this.page=page;
+        this.playwright=playwright;
+        this.browser=browser;
+    }
 
 
     public void openMyntraWebsite() {
@@ -21,11 +30,13 @@ public class MyntraActions {
         page.waitForLoadState(LoadState.LOAD);
     }
 
-    //switch case for tshirt and casual shirt. for van heusen click tshirt
-    //and for roadster click casual shirt
+
 
     public void navigateToCategory(String category) {
         page.hover("a[href='/shop/men']");
+
+        //switch case for tshirt and casual shirt. for van heusen click tshirt
+        //and for roadster click casual shirt
 
         switch (category.toLowerCase()) {
             case "men t-shirts":
@@ -42,11 +53,14 @@ public class MyntraActions {
     }
 
 
-    //find the searchicon and click on the first appearing as on the side panel we have multiple
-    //first appearing is brand so we click on it
-    //search for the brand name and click on the first checkbox
+
 
     public String applyBrandFilter(String brandName) {
+
+        //find the searchicon and click on the first appearing as on the side panel we have multiple
+        //first appearing is brand so we click on it
+        //search for the brand name and click on the first checkbox
+
         page.locator(".filter-search-iconSearch").first().click();
         page.waitForSelector("input[placeholder='Search for Brand']");
         page.locator("input[placeholder='Search for Brand']").fill(brandName);
@@ -74,18 +88,17 @@ public class MyntraActions {
 
             // we iterate through all product elements on the page
             for (Locator product : page.locator(".product-base").all()) {
-                String name = product.locator(".product-brand").textContent();
                 String model = product.locator(".product-product").textContent();
                 String priceText = product.locator(".product-price").textContent();
                 String link = "https://www.myntra.com/" + product.locator("a").getAttribute("href");
 
-                products.add(parseProductData(name, model, priceText, link));
+                products.add(parseProductData(model, priceText, link));
             }
 
             Locator nextButton = page.locator(".pagination-next");
             if (nextButton.count() > 0 && !nextButton.getAttribute("class").contains("pagination-disabled")) {
                 nextButton.click();
-                page.waitForLoadState(LoadState.NETWORKIDLE);
+                page.waitForLoadState(LoadState.LOAD);
                 //page.waitForTimeout(3000);
                 pageCount++;
             } else {
@@ -98,7 +111,7 @@ public class MyntraActions {
 
     //now we store product brand,model,link and extract the price and discount
     //we are formatting the product details
-    private Map<String, String> parseProductData(String name, String model, String priceText, String link) {
+    private Map<String, String> parseProductData(String model, String priceText, String link) {
         Map<String, String> productData = new HashMap<>();
         productData.put("Model", model);
         productData.put("Link", link);

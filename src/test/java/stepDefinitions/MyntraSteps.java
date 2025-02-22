@@ -1,5 +1,9 @@
 package stepDefinitions;
 
+import com.microsoft.playwright.Browser;
+import com.microsoft.playwright.BrowserType;
+import com.microsoft.playwright.Page;
+import com.microsoft.playwright.Playwright;
 import components.MyntraActions;
 import io.cucumber.java.en.*;
 
@@ -8,13 +12,18 @@ import java.util.Map;
 
 
 public class MyntraSteps {
-    private MyntraActions myntraActions = new MyntraActions();
+
+
+    private final Playwright playwright = Playwright.create();
+    private final Browser browser = playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(false));
+    private final Page page= browser.newPage();
+
+    private final MyntraActions myntraActions = new MyntraActions(page, playwright, browser);
+
 
     @Given("User open the Myntra website")
     public void user_open_the_myntra_website() {
         myntraActions.openMyntraWebsite();
-        // to confirm we have valid MyntraActions object
-        assert myntraActions != null : "MyntraActions instance is null!";
     }
 
     @When("User navigate to {string} section")
