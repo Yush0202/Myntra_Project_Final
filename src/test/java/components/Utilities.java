@@ -7,74 +7,48 @@ import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 
 import com.microsoft.playwright.options.LoadState;
+import org.junit.Assert;
 
 
-public class MyntraActions {
-
+public class Utilities {
     private final Page page;
-
     private final Playwright playwright;
-
     private final Browser browser;
 
-    public MyntraActions(Page page, Playwright playwright, Browser browser) {
+    public Utilities(Playwright playwright, Browser browser, Page page) {
         this.page=page;
         this.playwright=playwright;
         this.browser=browser;
     }
 
-
-    public void openMyntraWebsite() {
-        page.navigate("https://www.myntra.com/");
-
+    public void openWebsite(String url) {
+        page.navigate(url);
         page.waitForLoadState(LoadState.LOAD);
     }
 
-
-
-    public void navigateToCategory(String category) {
-        page.hover("a[href='/shop/men']");
-
-        //switch case for tshirt and casual shirt. for van heusen click tshirt
-        //and for roadster click casual shirt
-
-        switch (category.toLowerCase()) {
-            case "men t-shirts":
-                page.click("a[href='/men-tshirts']");
-                break;
-            case "men casual shirts":
-                page.click("a[href='/men-casual-shirts']");
-                break;
-            default:
-                System.out.println("Invalid category: " + category);
-                return;
-        }
-        page.waitForLoadState(LoadState.DOMCONTENTLOADED);
+    public void navigateToCategory(String category, String section) {
+        page.hover(String.format("a[href='/shop/%s']", category.toLowerCase()));
+        page.click(String.format("a[href='/%s-%s']", category.toLowerCase(), section.toLowerCase()));
+        // Waiting for the first product's image to load
+        page.waitForSelector("//li[@class = 'product-base'][1]//img");
+        page.waitForLoadState(LoadState.LOAD);
     }
 
+    public String fetchCategoryFromProductListingPage(){
+        return page.locator("h1.title-title").innerText();
+    }
 
-
-
-    public String applyBrandFilter(String brandName) {
-
-        //find the searchicon and click on the first appearing as on the side panel we have multiple
-        //first appearing is brand so we click on it
-        //search for the brand name and click on the first checkbox
-
+    public void applyBrandFilter(String brandName) {
         page.locator(".filter-search-iconSearch").first().click();
-        page.waitForSelector("input[placeholder='Search for Brand']");
         page.locator("input[placeholder='Search for Brand']").fill(brandName);
         page.locator("input[placeholder='Search for Brand']").press("Enter");
         page.waitForTimeout(1500);
 
-        Locator brandCheckbox = page.locator("input[type='checkbox'][value='" + brandName + "']");
-
-        if (brandCheckbox.count() > 0) {
-            brandCheckbox.first().evaluate("(checkbox) => checkbox.click()");
-            return "Success";
-        } else {
-            System.out.println("Brand not found: " + brandName);
-            return "Brand not found";
+        try{
+            page.locator(String.format("//input[@type='checkbox' and @value='%s']/..", brandName)).click();
+            page.waitForTimeout(2000);
+        } catch (TimeoutError e){
+            Assert.fail("Brand not found: " + brandName);
         }
     }
 
@@ -85,7 +59,6 @@ public class MyntraActions {
         while (pageCount < pageCountLimit) {
             page.waitForSelector(".product-base"); // Wait until product listings are available
 
-
             // we iterate through all product elements on the page
             for (Locator product : page.locator(".product-base").all()) {
                 String model = product.locator(".product-product").textContent();
@@ -95,11 +68,11 @@ public class MyntraActions {
                 products.add(parseProductData(model, priceText, link));
             }
 
+            // Navigating to the next page
             Locator nextButton = page.locator(".pagination-next");
             if (nextButton.count() > 0 && !nextButton.getAttribute("class").contains("pagination-disabled")) {
                 nextButton.click();
                 page.waitForLoadState(LoadState.LOAD);
-                //page.waitForTimeout(3000);
                 pageCount++;
             } else {
                 break;
@@ -108,10 +81,9 @@ public class MyntraActions {
         return products; // we return the list of scraped products
     }
 
-
     //now we store product brand,model,link and extract the price and discount
     //we are formatting the product details
-    private Map<String, String> parseProductData(String model, String priceText, String link) {
+    public Map<String, String> parseProductData(String model, String priceText, String link) {
         Map<String, String> productData = new HashMap<>();
         productData.put("Model", model);
         productData.put("Link", link);
@@ -125,9 +97,8 @@ public class MyntraActions {
         return productData;
     }
 
-
     //List to store the extracted price
-    private List<Integer> extractPrices(String priceText) {
+    public List<Integer> extractPrices(String priceText) {
         List<Integer> prices = new ArrayList<>();
 
         //here we define regex pattern to match format Rs. amount
@@ -140,14 +111,23 @@ public class MyntraActions {
         return prices;
     }
 
-
     //here we are defining a regex pattern to match discount in a particular format
-    private int extractDiscount(String priceText) {
+    public int extractDiscount(String priceText) {
         Pattern discountPattern = Pattern.compile("\\((\\d+)% OFF\\)");
         Matcher matcher = discountPattern.matcher(priceText);
 
         //if discount found, we return percentage else we return 0
         return matcher.find() ? Integer.parseInt(matcher.group(1)) : 0;
+    }
+
+    public List<Map<String, String>> sortScrapedProductsByDiscountInDescendingOrder(List<Map<String, String>> scrapedProducts){
+        // Sort products by discount percentage in descending order
+        scrapedProducts.sort((p1, p2) -> {
+            int discount1 = Integer.parseInt(p1.get("Discount").replaceAll("[^0-9]", ""));
+            int discount2 = Integer.parseInt(p2.get("Discount").replaceAll("[^0-9]", ""));
+            return Integer.compare(discount2, discount1); // Descending order
+        });
+        return scrapedProducts;
     }
 
     public void closeBrowser() {
