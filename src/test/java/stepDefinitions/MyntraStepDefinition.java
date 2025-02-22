@@ -59,6 +59,7 @@ public class MyntraStepDefinition {
 
     @And("validate that user is on {string} page")
     public void validateThatUserIsOnPage(String category) {
+        // validates that the user is on the correct category abd section
         Assert.assertEquals("Invalid Category", category, utilities.fetchCategoryFromProductListingPage());
     }
 

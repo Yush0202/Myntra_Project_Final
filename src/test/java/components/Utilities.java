@@ -21,23 +21,31 @@ public class Utilities {
         this.browser=browser;
     }
 
+    // navigates to specified url
     public void openWebsite(String url) {
         page.navigate(url);
         page.waitForLoadState(LoadState.LOAD);
     }
 
     public void navigateToCategory(String category, String section) {
+        // hovers on the specified category in the navbar
         page.hover(String.format("a[href='/shop/%s']", category.toLowerCase()));
+
+        // clicks on the specifies section in the drop down
         page.click(String.format("a[href='/%s-%s']", category.toLowerCase(), section.toLowerCase()));
+
         // Waiting for the first product's image to load
         page.waitForSelector("//li[@class = 'product-base'][1]//img");
         page.waitForLoadState(LoadState.LOAD);
     }
 
+    // fetches the category from the product listing page
     public String fetchCategoryFromProductListingPage(){
         return page.locator("h1.title-title").innerText();
     }
 
+
+    // searches for specified brand and applies filter
     public void applyBrandFilter(String brandName) {
         page.locator(".filter-search-iconSearch").first().click();
         page.locator("input[placeholder='Search for Brand']").fill(brandName);
@@ -52,6 +60,7 @@ public class Utilities {
         }
     }
 
+    // Scrapes product data from multiple pages on Myntra up to the specified page limit.
     public List<Map<String, String>> scrapeProductData(int pageCountLimit) {
         List<Map<String, String>> products = new ArrayList<>();
         int pageCount = 0;
