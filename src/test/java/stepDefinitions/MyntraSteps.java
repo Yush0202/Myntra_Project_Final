@@ -59,7 +59,7 @@ public class MyntraSteps {
 
         // Print product details
         for (Map<String, String> product : products) {
-            System.out.println("Name: " + product.get("Name"));
+           // System.out.println("Name: " + product.get("Name"));
             System.out.println("Model: " + product.get("Model"));
             System.out.println("Actual Price: " + product.get("Actual Price"));
             System.out.println("Discounted Price: " + product.get("Discounted Price"));

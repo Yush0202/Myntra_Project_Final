@@ -110,7 +110,7 @@ public class MyntraActions {
     //we are formatting the product details
     private Map<String, String> parseProductData(String name, String model, String priceText, String link) {
         Map<String, String> productData = new HashMap<>();
-        productData.put("Name", name);
+       // productData.put("Name", name);
         productData.put("Model", model);
         productData.put("Link", link);
 
